@@ -6,6 +6,7 @@ import languageReducer from './slices/languageSlice';
 import favoritesReducer from './slices/favoritesSlice';
 import searchReducer from './slices/searchSlice';
 import authReducer from './slices/authSlice';
+import { authListenerMiddleware } from '../middleware/auth';
 
 const rootReducer = combineReducers({
   language: languageReducer,
@@ -29,7 +30,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
-    }),
+    }).concat(authListenerMiddleware.middleware),
 });
 
 export const persistor = persistStore(store);

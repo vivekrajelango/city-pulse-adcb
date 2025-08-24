@@ -9,10 +9,12 @@ import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { toggleLanguage } from '../../store/slices/languageSlice';
 import { addFavorite, removeFavorite } from '../../store/slices/favoritesSlice';
 import { addSearchTerm } from '../../store/slices/searchSlice';
+import { signOut } from '../../store/slices/authSlice';
 import { searchEvents } from '../../utils/api';
 import { formatDate, getDirectionClass, truncateText } from '../../utils/helpers';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Event } from '../../types';
+import ProtectedRoute from '../../Components/ProtectedRoute';
 
 export default function Home() {
   const router = useRouter();
@@ -75,12 +77,19 @@ export default function Home() {
     }
   };
 
-  const handleLogout = () => {
-    router.push('/');
+  const handleLogout = async () => {
+    try {
+      await dispatch(signOut()).unwrap();
+      router.push('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      router.push('/');
+    }
   };
 
   return (
-    <div className={`min-h-screen bg-gray-50 ${getDirectionClass(language)}`}>
+    <ProtectedRoute>
+      <div className={`min-h-screen bg-gray-50 ${getDirectionClass(language)}`}>
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -160,7 +169,7 @@ export default function Home() {
                     placeholder={t('search.searchForEvents')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 text-gray-800 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   />
                 </div>
@@ -172,7 +181,7 @@ export default function Home() {
                     placeholder={t('search.city')}
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 text-gray-800 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   />
                 </div>
@@ -288,6 +297,7 @@ export default function Home() {
           </div>
         )}
       </main>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

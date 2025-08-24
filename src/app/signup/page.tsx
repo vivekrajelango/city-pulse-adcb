@@ -12,13 +12,16 @@ import {
   EnvelopeIcon,
   PhoneIcon
 } from '@heroicons/react/24/outline';
-import { useAppSelector } from '../../store/hooks';
+import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { getDirectionClass, getTextAlignClass } from '../../utils/helpers';
 import { useTranslation } from '../../hooks/useTranslation';
+import { signUp, clearError } from '../../store/slices/authSlice';
 
 export default function Signup() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const language = useAppSelector((state) => state.language.language);
+  const { isLoading, error: authError } = useAppSelector((state) => state.auth);
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
     firstName: '',
@@ -30,9 +33,8 @@ export default function Signup() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [localError, setLocalError] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -40,17 +42,18 @@ export default function Signup() {
       ...prev,
       [name]: value
     }));
-    if (error) setError('');
+    if (authError) dispatch(clearError());
+    if (localError) setLocalError('');
   };
 
   const validateForm = () => {
     if (formData.password !== formData.confirmPassword) {
-      setError(t('auth.passwordsDoNotMatch'));
+      setLocalError(t('auth.passwordsDoNotMatch'));
       return false;
     }
     
     if (formData.password.length < 6) {
-      setError(t('auth.passwordTooShort'));
+      setLocalError(t('auth.passwordTooShort'));
       return false;
     }
     
@@ -59,29 +62,32 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+    dispatch(clearError());
+    setLocalError('');
 
     if (!validateForm()) {
-      setLoading(false);
       return;
     }
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const result = await dispatch(signUp({ 
+        email: formData.email, 
+        password: formData.password 
+      })).unwrap();
       
-      setSuccess(true);
-      
-      setTimeout(() => {
-        router.push('/login');
-      }, 2000);
-      
+      if (result) {
+        setSuccess(true);
+        
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+      }
     } catch (err) {
-      setError(t('auth.registrationError'));
-    } finally {
-      setLoading(false);
+      console.error('Signup failed:', err);
     }
   };
+
+  const displayError = authError || localError;
 
   if (success) {
     return (
@@ -167,7 +173,7 @@ export default function Signup() {
                       value={formData.firstName}
                       onChange={handleInputChange}
                       required
-                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors text-sm ${getTextAlignClass(language)}`}
+                      className={`w-full px-3 py-2 text-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors text-sm ${getTextAlignClass(language)}`}
                       placeholder={t('auth.firstName')}
                     />
                   </div>
@@ -185,7 +191,7 @@ export default function Signup() {
                       value={formData.lastName}
                       onChange={handleInputChange}
                       required
-                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors text-sm ${getTextAlignClass(language)}`}
+                      className={`w-full px-3 py-2 text-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors text-sm ${getTextAlignClass(language)}`}
                       placeholder={t('auth.lastName')}
                     />
                   </div>
@@ -206,7 +212,7 @@ export default function Signup() {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${getTextAlignClass(language)}`}
+                      className={`w-full px-4 py-3 text-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${getTextAlignClass(language)}`}
                       placeholder={t('auth.enterEmail')}
                     />
                     <EnvelopeIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -227,7 +233,7 @@ export default function Signup() {
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${getTextAlignClass(language)}`}
+                      className={`w-full px-4 py-3 text-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${getTextAlignClass(language)}`}
                       placeholder={t('auth.enterPhone')}
                     />
                     <PhoneIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -250,14 +256,13 @@ export default function Signup() {
                         value={formData.password}
                         onChange={handleInputChange}
                         required
-                        className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${getTextAlignClass(language)}`}
+                        className={`w-full px-4 py-3 text-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${getTextAlignClass(language)}`}
                         placeholder={t('auth.enterPassword')}
                       />
-                      <LockClosedIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
                         {showPassword ? (
                           <EyeSlashIcon className="w-5 h-5" />
@@ -283,14 +288,13 @@ export default function Signup() {
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
                         required
-                        className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${getTextAlignClass(language)}`}
+                        className={`w-full px-4 py-3 text-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${getTextAlignClass(language)}`}
                         placeholder={t('auth.confirmYourPassword')}
                       />
-                      <LockClosedIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
                         {showConfirmPassword ? (
                           <EyeSlashIcon className="w-5 h-5" />
@@ -302,31 +306,31 @@ export default function Signup() {
                   </div>
                 </div>
 
-                {error && (
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                    >
-                      {error}
-                    </motion.div>
-                  </div>
-                )}
+                {displayError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                {displayError}
+                </motion.div>
+              </div>
+            )}
 
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium mt-6"
-                >
-                  {loading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      {t('auth.creatingAccount')}
-                    </div>
-                  ) : (
-                    t('auth.createAccount')
-                  )}
-                </button>
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  {t('auth.creatingAccount')}
+                </div>
+              ) : (
+                t('auth.createAccount')
+              )}
+            </button>
               </form>
 
               <div className="mt-6 text-center">

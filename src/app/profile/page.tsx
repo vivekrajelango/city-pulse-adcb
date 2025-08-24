@@ -17,6 +17,7 @@ import { useAppSelector, useAppDispatch } from '../../store/hooks';
 import { toggleLanguage } from '../../store/slices/languageSlice';
 import { formatDate, getDirectionClass } from '../../utils/helpers';
 import { useTranslation } from '../../hooks/useTranslation';
+import ProtectedRoute from '../../Components/ProtectedRoute';
 
 export default function Profile() {
   const router = useRouter();
@@ -52,7 +53,8 @@ export default function Profile() {
   const displayUser = user || mockUser;
 
   return (
-    <div className={`min-h-screen bg-gray-50 ${getDirectionClass(language)}`}>
+    <ProtectedRoute>
+      <div className={`min-h-screen bg-gray-50 ${getDirectionClass(language)}`}>
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -136,7 +138,7 @@ export default function Profile() {
                     </div>
                     <p className="text-gray-600">{displayUser.email}</p>
                     <p className="text-sm text-gray-500 mt-2">
-                      {language === 'ar' ? 'عضو منذ' : 'Member since'} {formatDate(displayUser.joinDate || '2024-01-15', language)}
+                      {language === 'ar' ? 'عضو منذ' : 'Member since'} {formatDate(mockUser.joinDate, language)}
                     </p>
                   </div>
                 )}
@@ -382,6 +384,7 @@ export default function Profile() {
           </div>
         </motion.div>
       </main>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
