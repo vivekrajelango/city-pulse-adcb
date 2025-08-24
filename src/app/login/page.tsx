@@ -7,12 +7,11 @@ import {
   EyeIcon, 
   EyeSlashIcon, 
   UserIcon, 
-  LockClosedIcon,
-  ArrowLeftIcon 
+  LockClosedIcon
 } from '@heroicons/react/24/outline';
-import { useAppSelector } from '../store/hooks';
-import { getDirectionClass, getTextAlignClass } from '../utils/helpers';
-import { useTranslation } from '../hooks/useTranslation';
+import { useAppSelector } from '../../store/hooks';
+import { getDirectionClass, getTextAlignClass } from '../../utils/helpers';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export default function Login() {
   const router = useRouter();
@@ -42,7 +41,7 @@ export default function Login() {
 
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('xxx')
+  
       if (formData.email === 'demo@example.com' && formData.password === 'password123') {
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('userEmail', formData.email);
