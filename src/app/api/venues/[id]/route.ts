@@ -5,10 +5,10 @@ const TICKETMASTER_BASE_URL = process.env.TICKETMASTER_BASE_URL || 'https://app.
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const url = new URL(`${TICKETMASTER_BASE_URL}/venues/${id}.json`);
     url.searchParams.append('apikey', TICKETMASTER_API_KEY);
